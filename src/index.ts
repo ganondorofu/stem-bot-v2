@@ -12,6 +12,7 @@ import { syncRoles } from './api/rolesSync';
 import { getNickname, updateNickname } from './api/nickname';
 import { createGeneration } from './api/generation';
 import { getMemberStatus } from './api/memberStatus';
+import { getAllMembers } from './api/members';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,7 @@ app.get('/api/nickname', authMiddleware, getNickname);
 app.post('/api/nickname/update', authMiddleware, updateNickname);
 app.post('/api/generation', authMiddleware, createGeneration);
 app.get('/api/member/status', authMiddleware, getMemberStatus);
+app.get('/api/members', authMiddleware, getAllMembers);
 
 // 404ハンドラー
 app.use(notFoundHandler);
