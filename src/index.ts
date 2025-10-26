@@ -5,6 +5,7 @@ import { loginDiscordBot } from './utils/discord';
 import { logger } from './utils/logger';
 import { authMiddleware } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { startKeepAlive } from './utils/keepalive';
 
 // APIエンドポイント
 import { syncRoles } from './api/rolesSync';
@@ -48,6 +49,9 @@ const startServer = async () => {
 
     logger.info('Logging in Discord Bot...');
     await loginDiscordBot(discordToken);
+
+    // Supabaseキープアライブを開始
+    startKeepAlive();
 
     // Expressサーバーを起動
     app.listen(PORT, () => {
