@@ -1,16 +1,4 @@
--- 既存テーブル削除
-DROP TABLE IF EXISTS member.generation_roles CASCADE;
-DROP TABLE IF EXISTS member.team_leaders CASCADE;
-DROP TABLE IF EXISTS member.member_team_relations CASCADE;
-DROP TABLE IF EXISTS member.teams CASCADE;
-DROP TABLE IF EXISTS member.members CASCADE;
-DROP SCHEMA IF EXISTS member CASCADE;
-
--- スキーマ作成
-CREATE SCHEMA IF NOT EXISTS member;
-
--- 部員テーブル
-CREATE TABLE member.members (
+ｔ
     supabase_auth_user_id UUID PRIMARY KEY,
     status INTEGER NOT NULL,
     generation INTEGER NOT NULL,
