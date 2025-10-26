@@ -135,10 +135,15 @@ GET /api/nickname?discord_uid=string
 **リクエスト**:
 ```json
 {
-  "generation": 52,
-  "role_name": "52期生"
+  "generation": 52
 }
 ```
+
+**処理内容**:
+- ロール名を自動生成（例: `52期生`）
+- DB内で既存チェック
+- Discord APIでロール作成
+- `generation_roles`テーブルに保存
 
 **レスポンス**:
 ```json

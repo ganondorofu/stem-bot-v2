@@ -131,6 +131,72 @@ export const syncRoles = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
+    // 4. Status別ロールの同期（中学生/高校生/OB）
+    const jhRoleId = process.env.DISCORD_JH_ROLE_ID;
+    const hRoleId = process.env.DISCORD_H_ROLE_ID;
+    const obRoleId = process.env.DISCORD_OB_ROLE_ID;
+    const statusRoleIds = [jhRoleId, hRoleId, obRoleId].filter(Boolean) as string[];
+
+    // 現在のstatusに応じたロールを決定
+    let targetStatusRoleId: string | null = null;
+    let statusRoleName = '';
+
+    if (memberData.status === 0 && jhRoleId) {
+      targetStatusRoleId = jhRoleId;
+      statusRoleName = '中学生';
+    } else if (memberData.status === 1 && hRoleId) {
+      targetStatusRoleId = hRoleId;
+      statusRoleName = '高校生';
+    } else if (memberData.status === 2 && obRoleId) {
+      targetStatusRoleId = obRoleId;
+      statusRoleName = 'OB';
+    }
+
+    // 正しいstatusロールを付与
+    if (targetStatusRoleId) {
+      if (!member.roles.cache.has(targetStatusRoleId)) {
+        await addRoleToMember(member, targetStatusRoleId);
+        rolesAssigned.push(statusRoleName);
+      }
+    }
+
+    // 他のstatusロールを削除
+    for (const roleId of statusRoleIds) {
+      if (roleId !== targetStatusRoleId && member.roles.cache.has(roleId)) {
+        await removeRoleFromMember(member, roleId);
+        const removedName = roleId === jhRoleId ? '中学生' : roleId === hRoleId ? '高校生' : 'OB';
+        rolesRemoved.push(removedName);
+      }
+    }
+
+    // 5. 部員ロール（MEMBERロール）の同期
+    const memberRoleId = process.env.DISCORD_MEMBER_ROLE_ID;
+    if (memberRoleId) {
+      // status 0 or 1（中学生・高校生）の場合のみ付与
+      if (memberData.status === 0 || memberData.status === 1) {
+        if (!member.roles.cache.has(memberRoleId)) {
+          await addRoleToMember(member, memberRoleId);
+          rolesAssigned.push('部員');
+        }
+      } else {
+        // status 2（OB）の場合は削除
+        if (member.roles.cache.has(memberRoleId)) {
+          await removeRoleFromMember(member, memberRoleId);
+          rolesRemoved.push('部員');
+        }
+      }
+    }
+
+    // 6. 認証済みロール（VERIFIEDロール）の付与
+    const verifiedRoleId = process.env.DISCORD_VERIFIED_ROLE_ID;
+    if (verifiedRoleId) {
+      // DBに登録されていれば付与
+      if (!member.roles.cache.has(verifiedRoleId)) {
+        await addRoleToMember(member, verifiedRoleId);
+        rolesAssigned.push('認証済み');
+      }
+    }
+
     const response: RolesSyncResponse = {
       success: true,
       roles_assigned: rolesAssigned,
