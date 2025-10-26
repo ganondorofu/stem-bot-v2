@@ -18,7 +18,7 @@ module.exports = {
     // ↓ここを追加
     post_update: [
       'npm install -y', // 依存パッケージ自動更新
-      'npm run build'   // TypeScriptのjsビルドaaaaaa
+      'npm run build'   // TypeScriptのjsビルド
     ]
   }]
 };
