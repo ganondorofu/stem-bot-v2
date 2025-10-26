@@ -1,5 +1,5 @@
 module.exports = {
-  apps: [{
+  apps : [{
     name: 'stem-bot-v2',
     script: 'dist/index.js',
     cwd: '/opt/stem-bot-v2',
@@ -14,6 +14,11 @@ module.exports = {
     out_file: 'logs/out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
-    time: true
+    time: true,
+    // ↓ここを追加
+    post_update: [
+      'npm install -y', // 依存パッケージ自動更新
+      'npm run build'   // TypeScriptのjsビルド
+    ]
   }]
 };
