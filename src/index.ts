@@ -16,8 +16,19 @@ import { getMemberStatus } from './api/memberStatus';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS設定
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : '*', // 本番環境では具体的なオリジンを指定することを推奨
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400, // プリフライトリクエストのキャッシュ時間（24時間）
+};
+
 // ミドルウェア
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ヘルスチェック（認証不要）
