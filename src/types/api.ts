@@ -33,7 +33,6 @@ export interface NicknameUpdateResponse {
 // POST /api/generation
 export interface GenerationCreateRequest {
   generation: number;
-  role_name: string;
 }
 
 export interface GenerationCreateResponse {

@@ -7,12 +7,12 @@ import { GenerationCreateRequest, GenerationCreateResponse } from '../types/api'
 // POST /api/generation - 期生ロール作成
 export const createGeneration = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { generation, role_name } = req.body as GenerationCreateRequest;
+    const { generation } = req.body as GenerationCreateRequest;
 
-    if (!generation || !role_name) {
+    if (!generation) {
       res.status(400).json({ 
         success: false, 
-        error: 'generation and role_name are required' 
+        error: 'generation is required' 
       });
       return;
     }
@@ -32,8 +32,11 @@ export const createGeneration = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // ロール名を自動生成: "52期生"
+    const roleName = `${generation}期生`;
+
     // Discordでロールを作成
-    const role = await createRole(role_name);
+    const role = await createRole(roleName);
 
     if (!role) {
       res.status(500).json({ 
