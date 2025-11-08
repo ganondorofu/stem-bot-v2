@@ -124,34 +124,45 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         const hRoleId = process.env.H_ROLE_ID;
         const obRoleId = process.env.OB_ROLE_ID;
 
-        // 既存のステータスロールを削除
-        if (jhRoleId && member.roles.cache.has(jhRoleId)) {
+        logger.info(`Member ${memberData.discord_uid} status: ${memberData.status}`);
+
+        // 新しいステータスロールを決定
+        let targetStatusRoleId: string | undefined;
+        if (memberData.status === 0 && jhRoleId) {
+          targetStatusRoleId = jhRoleId;
+          logger.info(`Target status role: JH (${jhRoleId})`);
+        } else if (memberData.status === 1 && hRoleId) {
+          targetStatusRoleId = hRoleId;
+          logger.info(`Target status role: H (${hRoleId})`);
+        } else if (memberData.status === 2 && obRoleId) {
+          targetStatusRoleId = obRoleId;
+          logger.info(`Target status role: OB (${obRoleId})`);
+        }
+
+        // 不要なステータスロールを削除
+        if (jhRoleId && member.roles.cache.has(jhRoleId) && targetStatusRoleId !== jhRoleId) {
           await removeRoleFromMember(member, jhRoleId);
           rolesRemoved.push(jhRoleId);
+          logger.info(`Removed JH role from ${memberData.discord_uid}`);
         }
-        if (hRoleId && member.roles.cache.has(hRoleId)) {
+        if (hRoleId && member.roles.cache.has(hRoleId) && targetStatusRoleId !== hRoleId) {
           await removeRoleFromMember(member, hRoleId);
           rolesRemoved.push(hRoleId);
+          logger.info(`Removed H role from ${memberData.discord_uid}`);
         }
-        if (obRoleId && member.roles.cache.has(obRoleId)) {
+        if (obRoleId && member.roles.cache.has(obRoleId) && targetStatusRoleId !== obRoleId) {
           await removeRoleFromMember(member, obRoleId);
           rolesRemoved.push(obRoleId);
+          logger.info(`Removed OB role from ${memberData.discord_uid}`);
         }
 
-        // 新しいステータスロールを付与
-        let statusRoleId: string | undefined;
-        if (memberData.status === 0 && jhRoleId) {
-          statusRoleId = jhRoleId;
-        } else if (memberData.status === 1 && hRoleId) {
-          statusRoleId = hRoleId;
-        } else if (memberData.status === 2 && obRoleId) {
-          statusRoleId = obRoleId;
-        }
-
-        if (statusRoleId) {
-          await addRoleToMember(member, statusRoleId);
-          rolesAssigned.push(statusRoleId);
-          logger.info(`Added status role to ${memberData.discord_uid}`);
+        // 必要なステータスロールを付与
+        if (targetStatusRoleId && !member.roles.cache.has(targetStatusRoleId)) {
+          await addRoleToMember(member, targetStatusRoleId);
+          rolesAssigned.push(targetStatusRoleId);
+          logger.info(`Added status role ${targetStatusRoleId} to ${memberData.discord_uid}`);
+        } else if (targetStatusRoleId) {
+          logger.info(`Member ${memberData.discord_uid} already has correct status role ${targetStatusRoleId}`);
         }
 
         // 5. 部員ロールの同期（中学生・高校生のみ）
