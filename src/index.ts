@@ -9,6 +9,7 @@ import { startKeepAlive } from './utils/keepalive';
 
 // APIエンドポイント
 import { syncRoles } from './api/rolesSync';
+import { syncAllRoles } from './api/rolesSyncAll';
 import { getNickname, updateNickname } from './api/nickname';
 import { createGeneration } from './api/generation';
 import { getMemberStatus } from './api/memberStatus';
@@ -39,6 +40,7 @@ app.get('/health', (req, res) => {
 
 // 認証が必要なエンドポイント
 app.post('/api/roles/sync', authMiddleware, syncRoles);
+app.post('/api/roles/sync-all', authMiddleware, syncAllRoles);
 app.get('/api/nickname', authMiddleware, getNickname);
 app.post('/api/nickname/update', authMiddleware, updateNickname);
 app.post('/api/generation', authMiddleware, createGeneration);
