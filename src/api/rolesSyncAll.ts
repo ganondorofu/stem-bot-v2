@@ -98,7 +98,7 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         }
 
         // 3. 班長ロールの同期
-        const leaderRoleId = process.env.LEADER_ROLE_ID;
+        const leaderRoleId = process.env.DISCORD_LEADER_ROLE_ID;
         if (leaderRoleId) {
           const { data: isLeader } = await supabase
             .from('team_leaders')
@@ -120,9 +120,9 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         }
 
         // 4. ステータス別ロールの同期（中学生/高校生/OB）
-        const jhRoleId = process.env.JH_ROLE_ID;
-        const hRoleId = process.env.H_ROLE_ID;
-        const obRoleId = process.env.OB_ROLE_ID;
+        const jhRoleId = process.env.DISCORD_JH_ROLE_ID;
+        const hRoleId = process.env.DISCORD_H_ROLE_ID;
+        const obRoleId = process.env.DISCORD_OB_ROLE_ID;
 
         logger.info(`Member ${memberData.discord_uid} status: ${memberData.status}`);
 
@@ -166,7 +166,7 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         }
 
         // 5. 部員ロールの同期（中学生・高校生のみ）
-        const memberRoleId = process.env.MEMBER_ROLE_ID;
+        const memberRoleId = process.env.DISCORD_MEMBER_ROLE_ID;
         if (memberRoleId && (memberData.status === 0 || memberData.status === 1)) {
           const hasMemberRole = member.roles.cache.has(memberRoleId);
           if (!hasMemberRole) {
@@ -185,7 +185,7 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         }
 
         // 6. 認証済みロールの同期
-        const verifiedRoleId = process.env.VERIFIED_ROLE_ID;
+        const verifiedRoleId = process.env.DISCORD_VERIFIED_ROLE_ID;
         if (verifiedRoleId) {
           const hasVerifiedRole = member.roles.cache.has(verifiedRoleId);
           if (!hasVerifiedRole) {
