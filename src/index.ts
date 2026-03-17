@@ -14,6 +14,7 @@ import { getNickname, updateNickname } from './api/nickname';
 import { createGeneration } from './api/generation';
 import { getMemberStatus } from './api/memberStatus';
 import { getAllMembers } from './api/members';
+import { assignRole, removeRole, listDiscordRoles } from './api/roles';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,9 @@ app.get('/health', (req, res) => {
 // 認証が必要なエンドポイント
 app.post('/api/roles/sync', authMiddleware, syncRoles);
 app.post('/api/roles/sync-all', authMiddleware, syncAllRoles);
+app.post('/api/roles/assign', authMiddleware, assignRole);
+app.post('/api/roles/remove', authMiddleware, removeRole);
+app.get('/api/roles/discord-list', authMiddleware, listDiscordRoles);
 app.get('/api/nickname', authMiddleware, getNickname);
 app.post('/api/nickname/update', authMiddleware, updateNickname);
 app.post('/api/generation', authMiddleware, createGeneration);

@@ -49,6 +49,39 @@ export interface MemberStatusResponse {
   current_roles: string[];
 }
 
+// POST /api/roles/assign
+export interface RoleAssignRequest {
+  discord_uid: string;
+  discord_role_id: string;
+}
+
+export interface RoleAssignResponse {
+  success: boolean;
+}
+
+// POST /api/roles/remove
+export interface RoleRemoveRequest {
+  discord_uid: string;
+  discord_role_id: string;
+}
+
+export interface RoleRemoveResponse {
+  success: boolean;
+}
+
+// GET /api/roles/discord-list
+export interface DiscordRole {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+}
+
+export interface DiscordRoleListResponse {
+  success: boolean;
+  roles: DiscordRole[];
+}
+
 // エラーレスポンス
 export interface ErrorResponse {
   success: false;

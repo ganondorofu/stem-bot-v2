@@ -130,3 +130,26 @@ export const setNickname = async (
     return false;
   }
 };
+
+// Discord上の全ロールを取得
+export const getAllDiscordRoles = async () => {
+  try {
+    const client = getDiscordClient();
+    const guildId = getGuildId();
+    const guild = await client.guilds.fetch(guildId);
+    const roles = await guild.roles.fetch();
+    
+    return roles
+      .filter(role => role.name !== '@everyone')
+      .map(role => ({
+        id: role.id,
+        name: role.name,
+        color: role.hexColor,
+        position: role.position,
+      }))
+      .sort((a, b) => b.position - a.position);
+  } catch (error) {
+    logger.error('Failed to fetch Discord roles', error);
+    return null;
+  }
+};
