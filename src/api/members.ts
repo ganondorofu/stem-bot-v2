@@ -69,6 +69,7 @@ export const getAllMembers = async (req: Request, res: Response) => {
           return {
             uid: member.discord_uid,
             name: name,
+            username: discordMember.user.username,
           };
         } catch (err) {
           // メンバーが見つからない場合はスキップ
