@@ -57,6 +57,7 @@ app.get('/health', async (req, res) => {
         guild_id: guildId,
         guild_accessible: guildOk,
         guild_error: guildError || undefined,
+        guilds_in_cache: client.guilds.cache.map(g => ({ id: g.id, name: g.name })),
       },
     });
   } catch (e) {
