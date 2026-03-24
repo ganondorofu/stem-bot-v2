@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { loginDiscordBot } from './utils/discord';
+import { loginDiscordBot, getDiscordClient, getGuildId } from './utils/discord';
 import { logger } from './utils/logger';
 import { authMiddleware } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -35,8 +35,33 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // ヘルスチェック（認証不要）
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+  try {
+    const client = getDiscordClient();
+    const wsStatus = client.ws.status;
+    const guildId = getGuildId();
+    let guildOk = false;
+    let guildError = '';
+    try {
+      const guild = await client.guilds.fetch(guildId);
+      guildOk = !!guild;
+    } catch (e: any) {
+      guildError = e.message || 'Unknown error';
+    }
+    res.json({
+      status: guildOk ? 'ok' : 'degraded',
+      timestamp: new Date().toISOString(),
+      discord: {
+        ws_status: wsStatus,
+        bot_user: client.user?.tag || null,
+        guild_id: guildId,
+        guild_accessible: guildOk,
+        guild_error: guildError || undefined,
+      },
+    });
+  } catch (e) {
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), discord: { error: 'Client not initialized' } });
+  }
 });
 
 // 認証が必要なエンドポイント
