@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
 import { getMember, addRoleToMember, removeRoleFromMember, getAllDiscordRoles } from '../utils/discord';
 import { logger } from '../utils/logger';
-import { 
-  RoleAssignRequest, 
-  RoleAssignResponse, 
-  RoleRemoveRequest, 
+import { isValidSnowflake } from '../utils/validation';
+import { getAllowedRoleIds } from '../utils/roleAllowlist';
+import {
+  RoleAssignRequest,
+  RoleAssignResponse,
+  RoleRemoveRequest,
   RoleRemoveResponse,
-  DiscordRoleListResponse 
+  DiscordRoleListResponse
 } from '../types/api';
 
 // POST /api/roles/assign - ロール付与
@@ -15,10 +17,28 @@ export const assignRole = async (req: Request, res: Response): Promise<void> => 
     const { discord_uid, discord_role_id } = req.body as RoleAssignRequest;
 
     if (!discord_uid || !discord_role_id) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'discord_uid and discord_role_id are required' 
+      res.status(400).json({
+        success: false,
+        error: 'discord_uid and discord_role_id are required'
       });
+      return;
+    }
+
+    // Input validation
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
+      return;
+    }
+    if (!isValidSnowflake(discord_role_id)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_role_id format' });
+      return;
+    }
+
+    // Validate role against allowlist
+    const allowedRoles = await getAllowedRoleIds();
+    if (!allowedRoles.has(discord_role_id)) {
+      logger.warn(`Rejected role assign attempt: role ${discord_role_id} is not in the bot-managed allowlist`);
+      res.status(403).json({ success: false, error: 'Role is not managed by this bot' });
       return;
     }
 
@@ -51,10 +71,28 @@ export const removeRole = async (req: Request, res: Response): Promise<void> => 
     const { discord_uid, discord_role_id } = req.body as RoleRemoveRequest;
 
     if (!discord_uid || !discord_role_id) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'discord_uid and discord_role_id are required' 
+      res.status(400).json({
+        success: false,
+        error: 'discord_uid and discord_role_id are required'
       });
+      return;
+    }
+
+    // Input validation
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
+      return;
+    }
+    if (!isValidSnowflake(discord_role_id)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_role_id format' });
+      return;
+    }
+
+    // Validate role against allowlist
+    const allowedRoles = await getAllowedRoleIds();
+    if (!allowedRoles.has(discord_role_id)) {
+      logger.warn(`Rejected role remove attempt: role ${discord_role_id} is not in the bot-managed allowlist`);
+      res.status(403).json({ success: false, error: 'Role is not managed by this bot' });
       return;
     }
 
@@ -85,7 +123,7 @@ export const removeRole = async (req: Request, res: Response): Promise<void> => 
 export const listDiscordRoles = async (req: Request, res: Response): Promise<void> => {
   try {
     const roles = await getAllDiscordRoles();
-    
+
     if (!roles) {
       res.status(500).json({ success: false, error: 'Failed to fetch Discord roles' });
       return;

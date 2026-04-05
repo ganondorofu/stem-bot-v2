@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../utils/supabase';
 import { createRole } from '../utils/discord';
 import { logger } from '../utils/logger';
+import { isValidGeneration } from '../utils/validation';
 import { GenerationCreateRequest, GenerationCreateResponse } from '../types/api';
 
 // POST /api/generation - 期生ロール作成
@@ -10,9 +11,17 @@ export const createGeneration = async (req: Request, res: Response): Promise<voi
     const { generation } = req.body as GenerationCreateRequest;
 
     if (!generation) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'generation is required' 
+      res.status(400).json({
+        success: false,
+        error: 'generation is required'
+      });
+      return;
+    }
+
+    if (!isValidGeneration(generation)) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid generation: must be a positive integer'
       });
       return;
     }

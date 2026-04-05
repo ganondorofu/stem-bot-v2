@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../utils/supabase';
 import { getMember, setNickname } from '../utils/discord';
 import { logger } from '../utils/logger';
+import { isValidSnowflake, isValidName } from '../utils/validation';
 import { NicknameResponse, NicknameUpdateRequest, NicknameUpdateResponse } from '../types/api';
 import { Member } from '../types/database';
 
@@ -12,6 +13,11 @@ export const getNickname = async (req: Request, res: Response): Promise<void> =>
 
     if (!discord_uid) {
       res.status(400).json({ success: false, error: 'discord_uid is required' });
+      return;
+    }
+
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
       return;
     }
 
@@ -45,9 +51,22 @@ export const updateNickname = async (req: Request, res: Response): Promise<void>
     const { discord_uid, name } = req.body as NicknameUpdateRequest;
 
     if (!discord_uid || !name) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'discord_uid and name are required' 
+      res.status(400).json({
+        success: false,
+        error: 'discord_uid and name are required'
+      });
+      return;
+    }
+
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
+      return;
+    }
+
+    if (!isValidName(name)) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid name: must be 1-20 characters with no control or zero-width characters'
       });
       return;
     }
