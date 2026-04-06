@@ -9,15 +9,32 @@ import { getDiscordClient } from '../utils/discord';
  */
 export const getAllMembers = async (req: Request, res: Response) => {
   try {
-    logger.info('Fetching all members...');
+    // Pagination support
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+    const offset = (page - 1) * limit;
 
-    // Supabaseから全メンバーを取得
+    logger.info(`Fetching members page=${page} limit=${limit}...`);
+
+    // Get total count first
+    const { count: totalCount, error: countError } = await supabase
+      .from('members')
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null);
+
+    if (countError) {
+      logger.error('Failed to count members', countError);
+      return res.status(500).json({ success: false, error: 'Failed to count members' });
+    }
+
+    // Supabaseからメンバーを取得（ページネーション付き）
     const { data: members, error } = await supabase
       .from('members')
       .select('discord_uid, student_number, generation, status, deleted_at')
       .is('deleted_at', null) // 削除されていないメンバーのみ
       .order('generation', { ascending: false })
-      .order('student_number', { ascending: true });
+      .order('student_number', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       logger.error('Failed to fetch members from database', error);
@@ -82,11 +99,17 @@ export const getAllMembers = async (req: Request, res: Response) => {
     // nullを除外
     const validMembers = memberList.filter((m) => m !== null);
 
-    logger.info(`Successfully fetched ${validMembers.length} members`);
+    logger.info(`Successfully fetched ${validMembers.length} members (page ${page})`);
 
     return res.json({
       success: true,
       data: validMembers,
+      pagination: {
+        page,
+        limit,
+        total: totalCount ?? 0,
+        total_pages: Math.ceil((totalCount ?? 0) / limit),
+      },
     });
   } catch (error) {
     logger.error('Error in getAllMembers', error);

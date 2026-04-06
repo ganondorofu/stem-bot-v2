@@ -19,11 +19,13 @@ import { assignRole, removeRole, listDiscordRoles } from './api/roles';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS設定
+// CORS設定 - ALLOWED_ORIGINS must be configured explicitly
+if (!process.env.ALLOWED_ORIGINS) {
+  throw new Error('ALLOWED_ORIGINS environment variable is required. Set comma-separated origins (e.g. "https://example.com,https://app.example.com").');
+}
+
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',')
-    : '*', // 本番環境では具体的なオリジンを指定することを推奨
+  origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -34,33 +36,34 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ヘルスチェック（認証不要）
+// Audit logging for security-sensitive operations
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      logger.info(`[AUDIT] ${req.method} ${req.path} ${res.statusCode} ${duration}ms ip=${req.ip}`);
+    });
+  }
+  next();
+});
+
+// ヘルスチェック（認証不要） - minimal response to avoid info leakage
 app.get('/health', async (req, res) => {
   try {
     const client = getDiscordClient();
-    const wsStatus = client.ws.status;
-    const guildId = getGuildId();
+    const wsReady = client.ws.status === 0; // 0 = READY
     let guildOk = false;
-    let guildError = '';
     try {
-      const guild = await client.guilds.fetch(guildId);
+      const guild = await client.guilds.fetch(getGuildId());
       guildOk = !!guild;
-    } catch (e: any) {
-      guildError = e.message || 'Unknown error';
+    } catch {
+      // guild fetch failed
     }
-    res.json({
-      status: guildOk ? 'ok' : 'degraded',
-      timestamp: new Date().toISOString(),
-      discord: {
-        ws_status: wsStatus,
-        bot_user: client.user?.tag || null,
-        guild_id: guildId,
-        guild_accessible: guildOk,
-        guild_error: guildError || undefined,
-      },
-    });
-  } catch (e) {
-    res.json({ status: 'ok', timestamp: new Date().toISOString(), discord: { error: 'Client not initialized' } });
+    const status = wsReady && guildOk ? 'ok' : 'degraded';
+    res.json({ status, timestamp: new Date().toISOString() });
+  } catch {
+    res.json({ status: 'degraded', timestamp: new Date().toISOString() });
   }
 });
 

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getMember } from '../utils/discord';
 import { logger } from '../utils/logger';
+import { isValidSnowflake } from '../utils/validation';
 import { MemberStatusResponse } from '../types/api';
 
 // GET /api/member/status - Discord在籍確認
@@ -10,6 +11,11 @@ export const getMemberStatus = async (req: Request, res: Response): Promise<void
 
     if (!discord_uid) {
       res.status(400).json({ success: false, error: 'discord_uid is required' });
+      return;
+    }
+
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
       return;
     }
 

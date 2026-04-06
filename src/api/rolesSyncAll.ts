@@ -66,9 +66,13 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
         if (generationRole) {
           const hasRole = member.roles.cache.has(generationRole.discord_role_id);
           if (!hasRole) {
-            await addRoleToMember(member, generationRole.discord_role_id);
-            rolesAssigned.push(generationRole.discord_role_id);
-            logger.info(`Added generation role to ${memberData.discord_uid}`);
+            const ok = await addRoleToMember(member, generationRole.discord_role_id);
+            if (!ok) {
+              logger.warn(`Failed to add generation role ${generationRole.discord_role_id} to ${memberData.discord_uid}`);
+            } else {
+              rolesAssigned.push(generationRole.discord_role_id);
+              logger.info(`Added generation role to ${memberData.discord_uid}`);
+            }
           }
         }
 
@@ -89,9 +93,13 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
             for (const team of teams as Team[]) {
               const hasRole = member.roles.cache.has(team.discord_role_id);
               if (!hasRole) {
-                await addRoleToMember(member, team.discord_role_id);
-                rolesAssigned.push(team.discord_role_id);
-                logger.info(`Added team role ${team.name} to ${memberData.discord_uid}`);
+                const ok = await addRoleToMember(member, team.discord_role_id);
+                if (!ok) {
+                  logger.warn(`Failed to add team role ${team.name} to ${memberData.discord_uid}`);
+                } else {
+                  rolesAssigned.push(team.discord_role_id);
+                  logger.info(`Added team role ${team.name} to ${memberData.discord_uid}`);
+                }
               }
             }
           }
@@ -109,13 +117,21 @@ export const syncAllRoles = async (req: Request, res: Response): Promise<void> =
           const hasLeaderRole = member.roles.cache.has(leaderRoleId);
 
           if (isLeader && !hasLeaderRole) {
-            await addRoleToMember(member, leaderRoleId);
-            rolesAssigned.push(leaderRoleId);
-            logger.info(`Added leader role to ${memberData.discord_uid}`);
+            const ok = await addRoleToMember(member, leaderRoleId);
+            if (ok) {
+              rolesAssigned.push(leaderRoleId);
+              logger.info(`Added leader role to ${memberData.discord_uid}`);
+            } else {
+              logger.warn(`Failed to add leader role to ${memberData.discord_uid}`);
+            }
           } else if (!isLeader && hasLeaderRole) {
-            await removeRoleFromMember(member, leaderRoleId);
-            rolesRemoved.push(leaderRoleId);
-            logger.info(`Removed leader role from ${memberData.discord_uid}`);
+            const ok = await removeRoleFromMember(member, leaderRoleId);
+            if (ok) {
+              rolesRemoved.push(leaderRoleId);
+              logger.info(`Removed leader role from ${memberData.discord_uid}`);
+            } else {
+              logger.warn(`Failed to remove leader role from ${memberData.discord_uid}`);
+            }
           }
         }
 

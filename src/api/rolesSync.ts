@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../utils/supabase';
 import { getMember, addRoleToMember, removeRoleFromMember } from '../utils/discord';
 import { logger } from '../utils/logger';
+import { isValidSnowflake } from '../utils/validation';
 import { RolesSyncRequest, RolesSyncResponse } from '../types/api';
 import { Member, GenerationRole, Team, MemberTeamRelation, TeamLeader } from '../types/database';
 
@@ -11,6 +12,11 @@ export const syncRoles = async (req: Request, res: Response): Promise<void> => {
 
     if (!discord_uid) {
       res.status(400).json({ success: false, error: 'discord_uid is required' });
+      return;
+    }
+
+    if (!isValidSnowflake(discord_uid)) {
+      res.status(400).json({ success: false, error: 'Invalid discord_uid format' });
       return;
     }
 

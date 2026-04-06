@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
 
 // Bearer Token認証ミドルウェア
@@ -27,11 +28,14 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  if (token !== validToken) {
+  // Use constant-time comparison to prevent timing attacks
+  const tokenBuffer = Buffer.from(token);
+  const validTokenBuffer = Buffer.from(validToken);
+  if (tokenBuffer.length !== validTokenBuffer.length || !crypto.timingSafeEqual(tokenBuffer, validTokenBuffer)) {
     logger.warn(`Invalid token attempt from ${req.ip}`);
-    res.status(401).json({ 
-      success: false, 
-      error: 'Unauthorized: Invalid token' 
+    res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Invalid token'
     });
     return;
   }
