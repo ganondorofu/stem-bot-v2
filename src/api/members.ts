@@ -51,6 +51,10 @@ export const getAllMembers = async (req: Request, res: Response) => {
     // 各メンバーのニックネームを取得
     const memberList = await Promise.all(
       members.map(async (member: any) => {
+        if (!member.discord_uid) {
+          logger.warn('Skipping member with no discord_uid');
+          return null;
+        }
         try {
           // Discordメンバー情報を取得
           const discordMember = await guild.members.fetch(member.discord_uid);
