@@ -69,6 +69,17 @@ export interface RoleRemoveResponse {
   success: boolean;
 }
 
+// POST /api/roles/create
+export interface RoleCreateRequest {
+  name: string;
+}
+
+export interface RoleCreateResponse {
+  success: boolean;
+  role_id: string;
+  name: string;
+}
+
 // GET /api/roles/discord-list
 export interface DiscordRole {
   id: string;

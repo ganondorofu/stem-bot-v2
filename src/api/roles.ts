@@ -1,13 +1,40 @@
 import { Request, Response } from 'express';
-import { getMember, addRoleToMember, removeRoleFromMember, getAllDiscordRoles } from '../utils/discord';
+import { getMember, addRoleToMember, removeRoleFromMember, getAllDiscordRoles, createRole } from '../utils/discord';
 import { logger } from '../utils/logger';
-import { 
-  RoleAssignRequest, 
-  RoleAssignResponse, 
-  RoleRemoveRequest, 
+import {
+  RoleAssignRequest,
+  RoleAssignResponse,
+  RoleRemoveRequest,
   RoleRemoveResponse,
-  DiscordRoleListResponse 
+  RoleCreateRequest,
+  RoleCreateResponse,
+  DiscordRoleListResponse
 } from '../types/api';
+
+// POST /api/roles/create - ロール新規作成
+export const createNewRole = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name } = req.body as RoleCreateRequest;
+
+    if (!name) {
+      res.status(400).json({ success: false, error: 'name is required' });
+      return;
+    }
+
+    const role = await createRole(name);
+    if (!role) {
+      res.status(500).json({ success: false, error: 'Failed to create role on Discord' });
+      return;
+    }
+
+    const response: RoleCreateResponse = { success: true, role_id: role.id, name: role.name };
+    logger.info(`Role created: ${role.name} (${role.id})`);
+    res.json(response);
+  } catch (error) {
+    logger.error('Error in createNewRole', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};
 
 // POST /api/roles/assign - ロール付与
 export const assignRole = async (req: Request, res: Response): Promise<void> => {
